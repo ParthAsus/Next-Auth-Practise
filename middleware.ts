@@ -19,7 +19,7 @@ export default auth((req) => {
     }
   }
 
-  // Redirect non-logged-in users away from protected routes
+  // Redirect non-logged-in users away from pro tected routes
   if (protectedRoutes.includes(currentPathname)) {
     if (!isLoggedIn) {
       console.log("Access denied for protected routes for not logged-in users");

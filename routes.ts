@@ -5,7 +5,9 @@ export const protectedRoutes = [
 export const authRoutes = [
   "/",          // Home page
   "/auth/login",  // Login page
-  "/auth/register"  // Registration page
+  "/auth/register",  // Registration page
+  "/auth/error",
+  "/auth/new-verification"
 ];
 
 export const apiAuthPrefix = "/api/auth";
