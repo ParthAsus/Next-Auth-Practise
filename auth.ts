@@ -3,6 +3,8 @@ import authConfig from "./auth.config"
 import {PrismaAdapter} from "@auth/prisma-adapter";
 import {db} from "@/lib/db";
 import { getUserById } from "./data/user";
+import { getTwoFactorConfirmationByUserId } from "./data/two-factor-confirmation";
+
 export const { auth, signIn, signOut, handlers: {GET, POST} 
 } = NextAuth({ 
 
@@ -29,6 +31,23 @@ export const { auth, signIn, signOut, handlers: {GET, POST}
 
       if(!existingUser?.emailVerified) return false;
 
+      // 2FA
+      if(existingUser.isTwoFactorEnabled){
+        const twoFactorConfirmation = await getTwoFactorConfirmationByUserId(existingUser.id);
+
+        console.log("Two-Factor Confirmation:", twoFactorConfirmation); // Added logging
+
+        if(!twoFactorConfirmation) {
+            console.error("No two-factor confirmation found for user:", existingUser.id); // Error logging
+            return false;
+        }
+        await db.twoFactorConfirmation.delete({
+          where: {
+            id: twoFactorConfirmation?.id
+          }
+        });
+      }
+
       return true;
     },
 
@@ -41,6 +60,11 @@ export const { auth, signIn, signOut, handlers: {GET, POST}
         session.user.role = token.role as string;
       }
 
+      if(token.isTwoFactorEnabled && session.user){
+        session.user.isTwoFactorEnabled = token.isTwoFactorEnabled as boolean;
+      }
+
+
       return session;
     },
     async jwt({token}){
@@ -51,7 +75,7 @@ export const { auth, signIn, signOut, handlers: {GET, POST}
       if(!existingUser) return token;
 
       token.role = existingUser.role;
-
+      token.isTwoFactorEnabled = existingUser.isTwoFactorEnabled;
       return token;
     } 
   },
